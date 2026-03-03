@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 """
 スマホ表示の縦方向オーバーフロー検査スクリプト
-presentation.html を編集したら実行してください。
+JS による transform: scale(vw/393) 方式に対応。
+375px (iPhone SE/13 mini) と 393px (iPhone 14 Pro) の両方で検証する。
 
 使い方:
   python3 check-mobile.py
   python3 check-mobile.py --screenshot   # 全スライドのスクショも保存
+
+前提:
+  pip install playwright pillow && playwright install chromium
 """
 
 import sys
@@ -26,16 +30,25 @@ except ImportError:
 
 # ---------- 設定 ----------
 HTML_PATH = f"file://{Path(__file__).parent / 'presentation.html'}"
-VIEWPORT = {"width": 393, "height": 852}  # iPhone 14 Pro 相当
+VIEWPORTS = [
+    {"width": 375, "height": 812},   # iPhone SE 3rd gen / iPhone 13 mini
+    {"width": 393, "height": 852},   # iPhone 14 Pro（デザイン基準幅）
+]
 TOTAL_SLIDES = 20
-# slide padding: top=8, bottom=24 / slide-inner padding-top=6
-AVAILABLE_HEIGHT = VIEWPORT["width"] - 8 - 24 - 6  # = 355px
-TOLERANCE = 9  # slide-inner の padding-top 6px + 多少の誤差
+DESIGN_WIDTH = 393   # JS の --ms = innerWidth / DESIGN_WIDTH
+SLIDE_PAD_TOP = 8    # .slide の padding-top (compact media query)
+TOLERANCE = 9        # 許容誤差 (px)
 # --------------------------
 
-def check_overflow(page) -> list[dict]:
+
+def check_overflow(page, vw: int) -> list[dict]:
+    """各スライドの visual bottom を計算してオーバーフローを検出する。
+    visual bottom = SLIDE_PAD_TOP + scrollH * scale
+    scale = min(1.0, vw / DESIGN_WIDTH)  ← JS の updateMobileScale() と同じ計算
+    """
+    scale = min(1.0, vw / DESIGN_WIDTH)
     return page.evaluate("""(args) => {
-        const {total, available} = args;
+        const {total, vw, scale, slidePadTop} = args;
         const results = [];
         for (let i = 1; i <= total; i++) {
             const slide = document.getElementById('slide-' + i);
@@ -44,15 +57,28 @@ def check_overflow(page) -> list[dict]:
             slide.classList.add('active');
             const inner = slide.querySelector('.slide-inner');
             const h = inner ? inner.scrollHeight : slide.scrollHeight;
-            results.push({i, scrollH: h, available, overflow: h - available});
+            // slide は overflow:hidden で高さ = vw (portrait 時)
+            // slide-inner は transform:scale(scale) / transform-origin: top center
+            // → visual bottom = slidePadTop + h * scale
+            const visualBottom = slidePadTop + h * scale;
+            results.push({
+                i, scrollH: h, scale,
+                visualBottom: Math.round(visualBottom * 10) / 10,
+                vw, overflow: visualBottom - vw
+            });
         }
         return results;
-    }""", {"total": TOTAL_SLIDES, "available": AVAILABLE_HEIGHT})
+    }""", {"total": TOTAL_SLIDES, "vw": vw, "scale": scale, "slidePadTop": SLIDE_PAD_TOP})
 
 
-def take_screenshots(page, out_dir: Path):
+def take_screenshots(page, vw: int, out_dir: Path):
     """各スライドのスクリーンショットを保存（-90°回転して正立させる）"""
     out_dir.mkdir(exist_ok=True)
+    # swipe-hint を非表示にする
+    page.evaluate("""() => {
+        const h = document.getElementById('swipe-hint');
+        if (h) h.style.display = 'none';
+    }""")
     for i in range(1, TOTAL_SLIDES + 1):
         page.evaluate(f"""() => {{
             document.querySelectorAll('.slide').forEach(el => el.classList.remove('active'));
@@ -62,58 +88,70 @@ def take_screenshots(page, out_dir: Path):
         time.sleep(0.15)
         png = page.screenshot()
         if Image:
-            img = Image.open(__import__("io").BytesIO(png))
-            img.rotate(90, expand=True).save(out_dir / f"slide_{i:02d}.png")
+            import io
+            img = Image.open(io.BytesIO(png))
+            img.rotate(90, expand=True).save(out_dir / f"slide_{i:02d}_vw{vw}.png")
         else:
-            (out_dir / f"slide_{i:02d}.png").write_bytes(png)
-    print(f"スクリーンショット保存: {out_dir}/")
+            (out_dir / f"slide_{i:02d}_vw{vw}.png").write_bytes(png)
+    print(f"  → スクリーンショット保存: {out_dir}/ (vw={vw})")
 
 
 def main():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description="モバイルオーバーフロー検査")
     parser.add_argument("--screenshot", action="store_true", help="全スライドのスクリーンショットも保存")
     args = parser.parse_args()
 
+    all_ng: list[tuple[int, int]] = []
+
     with sync_playwright() as p:
-        browser = p.chromium.launch()
-        page = browser.new_page(viewport=VIEWPORT)
-        page.goto(HTML_PATH, wait_until="networkidle")
-        time.sleep(0.8)
+        for vp in VIEWPORTS:
+            vw = vp["width"]
+            scale = min(1.0, vw / DESIGN_WIDTH)
+            print(f"\n── vw={vw}px  scale={scale:.4f} ──────────────────────────")
 
-        results = check_overflow(page)
+            browser = p.chromium.launch()
+            page = browser.new_page(viewport=vp)
+            page.goto(HTML_PATH, wait_until="networkidle")
+            time.sleep(0.8)
 
-        if args.screenshot:
-            take_screenshots(page, Path("mobile-screenshots"))
+            results = check_overflow(page, vw)
 
-        browser.close()
+            if args.screenshot:
+                take_screenshots(page, vw, Path("mobile-screenshots"))
 
-    # ---------- 結果表示 ----------
-    ok_count = 0
-    ng_slides = []
+            browser.close()
 
-    print(f"\n{'S':>3} | {'scrollH':>8} | {'avail':>7} | {'overflow':>9} | 判定")
-    print("─" * 48)
-    for r in results:
-        if "error" in r:
-            print(f"S{r['i']:>2} | {'ERROR':>8} | {'─':>7} | {'─':>9} | ❌")
-            ng_slides.append(r["i"])
-            continue
-        overflow = r["overflow"]
-        ok = overflow <= TOLERANCE
-        mark = "✅" if ok else f"❌ +{overflow - TOLERANCE}px はみ出し"
-        print(f"S{r['i']:>2} | {r['scrollH']:>8} | {r['available']:>7} | {r['overflow']:>9} | {mark}")
-        if ok:
-            ok_count += 1
-        else:
-            ng_slides.append(r["i"])
+            # ---------- 結果表示 ----------
+            ng_slides = []
+            print(f"{'S':>3} | {'scrollH':>8} | {'visBottom':>10} | {'vw':>5} | {'overflow':>9} | 判定")
+            print("─" * 60)
+            for r in results:
+                if "error" in r:
+                    print(f"S{r['i']:>2} | {'ERROR':>8} | {'─':>10} | {'─':>5} | {'─':>9} | ❌")
+                    ng_slides.append(r["i"])
+                    continue
+                ov = r["overflow"]
+                ok = ov <= TOLERANCE
+                mark = "✅" if ok else f"❌ +{ov - TOLERANCE:.1f}px"
+                print(f"S{r['i']:>2} | {r['scrollH']:>8} | {r['visualBottom']:>10.1f} | {r['vw']:>5} | {ov:>9.1f} | {mark}")
+                if not ok:
+                    ng_slides.append(r["i"])
+
+            if ng_slides:
+                print(f"\n⚠️  vw={vw}: {len(ng_slides)} 枚がはみ出しています: S{ng_slides}")
+                all_ng.extend([(vw, s) for s in ng_slides])
+            else:
+                print(f"\n✅ vw={vw}: 全 {len(results)} 枚 OK（DESIGN_WIDTH={DESIGN_WIDTH}, tolerance={TOLERANCE}px）")
 
     print()
-    if ng_slides:
-        print(f"⚠️  {len(ng_slides)} 枚のスライドがはみ出しています: {ng_slides}")
-        print("   コンパクトCSSで font-size / padding / margin を調整してください。")
+    if all_ng:
+        print(f"⚠️  合計 {len(all_ng)} 件の問題があります:")
+        for vw, s in all_ng:
+            print(f"   S{s} at vw={vw}px")
+        print("\ncompact media query で font-size / padding / margin を調整してください。")
         sys.exit(1)
     else:
-        print(f"✅ 全 {ok_count} 枚が正常です（available={AVAILABLE_HEIGHT}px, tolerance={TOLERANCE}px）")
+        print("✅ 全ビューポート・全スライド正常です。")
         sys.exit(0)
 
 

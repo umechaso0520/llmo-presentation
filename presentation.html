@@ -809,6 +809,12 @@
 
   /* スマホ縦向き → #appごと90°回転してランドスケープ表示（iOS Safari対応） */
   @media (max-width: 640px) and (orientation: portrait) {
+    /* スライド内コンテンツを端末幅に合わせてスケーリング
+     * JS が --ms = innerWidth/393 をセット。393px未満の端末でも収まる。 */
+    .slide-inner {
+      transform: scale(var(--ms, 1));
+      transform-origin: top center;
+    }
     #app {
       /* dvh = Safariのバー縮退に追従する動的 viewport height */
       top:  calc(50vh - 50vw); top:  calc(50dvh - 50vw);
@@ -1891,6 +1897,38 @@ const TOTAL = 20;
   }, { passive: true });
 
   updateNav();
+
+  /* ===== モバイル: 実測scrollHからscaleを逆算してはみ出しを防ぐ ===== */
+  function updateMobileScale() {
+    var vw = window.innerWidth;
+    if (vw >= 640) {
+      document.documentElement.style.setProperty('--ms', '1');
+      return;
+    }
+    // 先に scale=1 にリセットして素の scrollHeight を計測
+    document.documentElement.style.setProperty('--ms', '1');
+
+    // .slide は常に display:flex（opacity で表示切替）なので全スライド直接計測できる
+    var SLIDE_PAD_TOP = 8; // compact CSS の .slide padding-top
+    var maxH = 0;
+    document.querySelectorAll('.slide .slide-inner').forEach(function(inner) {
+      maxH = Math.max(maxH, inner.scrollHeight);
+    });
+
+    // visual bottom = SLIDE_PAD_TOP + maxH * scale ≤ vw
+    var scale = maxH > 0 ? Math.min(1, (vw - SLIDE_PAD_TOP) / maxH) : 1;
+    document.documentElement.style.setProperty('--ms', scale.toFixed(4));
+  }
+  // 即時実行 + フォント読込完了後に再計測（Noto Sans JP の高さ変動を反映）
+  updateMobileScale();
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(updateMobileScale);
+  }
+  // リサイズ・iOS UIバー出入りにも対応
+  window.addEventListener('resize', updateMobileScale);
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', updateMobileScale);
+  }
 
   /* ===== スワイプヒント（モバイルのみ・初回表示） ===== */
   (function() {
