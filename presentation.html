@@ -1597,9 +1597,9 @@
 
 <!-- ===== NAVIGATION ===== -->
 <nav id="nav">
-  <button class="nav-btn" id="btn-prev" onclick="changeSlide(-1)" title="前へ"><i class="fa-solid fa-chevron-left"></i></button>
+  <button class="nav-btn" id="btn-prev" onclick="changeSlide(-1);this.blur()" title="前へ"><i class="fa-solid fa-chevron-left"></i></button>
   <span id="slide-counter">1 / 20</span>
-  <button class="nav-btn" id="btn-next" onclick="changeSlide(1)" title="次へ"><i class="fa-solid fa-chevron-right"></i></button>
+  <button class="nav-btn" id="btn-next" onclick="changeSlide(1);this.blur()" title="次へ"><i class="fa-solid fa-chevron-right"></i></button>
 </nav>
 
 <script>
