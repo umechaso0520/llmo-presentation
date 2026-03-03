@@ -725,79 +725,99 @@
      RESPONSIVE
   ============================================= */
 
-  /* タブレット */
+  /* タブレット（横向き含む） */
   @media (max-width: 900px) {
     .slide { padding: 40px 36px 88px; }
-    .card-grid-3,
-    .metric-cards,
-    .principle-cards,
-    .risk-cards       { grid-template-columns: repeat(2, 1fr); }
-    .circle-icon      { width: 72px; height: 72px; font-size: 1.6rem; }
-    .circle-arrow     { padding-top: 34px; }
-    .proc-col         { padding: 0 16px; }
+    .card-grid-3, .metric-cards,
+    .principle-cards, .risk-cards { grid-template-columns: repeat(2, 1fr); }
+    .circle-icon  { width: 72px; height: 72px; font-size: 1.6rem; }
+    .circle-arrow { padding-top: 34px; }
+    .proc-col     { padding: 0 16px; }
   }
 
-  /* スマートフォン */
-  @media (max-width: 640px) {
-    .slide { padding: 12px 16px 70px; }
-    .slide-inner { padding-top: clamp(12px, 3vh, 24px); }
+  /* 横回転ヒント（デフォルト非表示） */
+  #rotate-hint {
+    display: none;
+    position: fixed; inset: 0; z-index: 9999;
+    background: var(--bg-primary);
+    flex-direction: column; align-items: center; justify-content: center; gap: 20px;
+  }
+  #rotate-hint i { font-size: 3rem; color: var(--accent-cyan); animation: rotate-icon 2s ease-in-out infinite; }
+  #rotate-hint p { font-size: 1rem; font-weight: 700; color: var(--text-primary); }
+  @keyframes rotate-icon { 0%,100% { transform: rotate(0deg); } 50% { transform: rotate(90deg); } }
 
-    /* タイトル */
-    .slide-title.large  { font-size: clamp(1.3rem, 5.5vw, 1.7rem); margin-bottom: 16px; }
-    .slide-title.medium { font-size: clamp(1.1rem, 4.5vw, 1.4rem); margin-bottom: 16px; }
-    .divider { margin-bottom: 14px; }
+  /* スマホ縦向き → 横回転を促す */
+  @media (max-width: 640px) and (orientation: portrait) {
+    #rotate-hint { display: flex; }
+    #presentation, #nav, #topbar { display: none; }
+  }
 
-    /* グリッド → 1カラム */
-    .card-grid-3,
-    .card-grid-2,
-    .metric-cards,
-    .principle-cards,
-    .risk-cards   { grid-template-columns: 1fr; gap: 10px; }
+  /* スマホ横向き専用レイアウト */
+  @media (max-height: 500px) and (orientation: landscape) {
+    .slide {
+      padding: 8px 20px 52px;
+      overflow: hidden;
+    }
+    .slide-inner {
+      padding-top: 6px;
+      gap: 0;
+    }
+    #slide-1 .slide-inner, #slide-19 .slide-inner { padding-top: 0; }
 
-    /* 2カラム → 縦積み */
-    .two-col      { grid-template-columns: 1fr; gap: 10px; }
-    .vs-layout    { grid-template-columns: 1fr; }
-    .vs-center    { flex-direction: row; padding: 4px 0; }
-
-    /* Before/After → 縦積み */
-    .before-after-wrap { grid-template-columns: 1fr; }
-    .ba-arrow-mid { flex-direction: row; gap: 8px; padding: 2px 0; }
-    .ba-arrow-mid span { writing-mode: horizontal-tb; }
-
-    /* 縦型2列プロセス図 → 縦積み */
-    .proc-grid    { grid-template-columns: 1fr; }
-    .proc-divider { display: none; }
-    .proc-col     { padding: 0; }
-    .proc-icon    { width: 44px; height: 44px; font-size: 1.2rem; border-radius: 10px; }
-    .proc-title   { font-size: 0.9rem; }
-    .proc-desc    { font-size: 0.75rem; }
-
-    /* 横型大円フロー → 小型化 */
-    .circle-flow  { gap: 0; }
-    .circle-icon  { width: 52px; height: 52px; font-size: 1.2rem; }
-    .circle-title { font-size: 0.72rem; }
-    .circle-desc  { font-size: 0.62rem; display: none; } /* 説明は省略 */
-    .circle-arrow { padding-top: 22px; font-size: 0.9rem; }
-
-    /* 棒グラフ */
-    .bar-label    { width: 70px; font-size: 0.72rem; }
-
-    /* テーブル */
-    thead th, tbody td { padding: 8px 10px; font-size: 0.72rem; }
+    /* タイトル・ラベル */
+    .section-label  { font-size: 0.6rem; margin-bottom: 4px; }
+    .divider        { height: 2px; margin-bottom: 8px; }
+    .slide-title.large  { font-size: clamp(1rem, 3.5vh, 1.4rem); margin-bottom: 8px; }
+    .slide-title.medium { font-size: clamp(0.9rem, 3vh,  1.2rem); margin-bottom: 8px; }
 
     /* ナビ */
-    #nav          { height: 56px; gap: 16px; }
-    .nav-btn      { width: 38px; height: 38px; font-size: 0.95rem; }
+    #nav      { height: 44px; gap: 12px; }
+    .nav-btn  { width: 32px; height: 32px; font-size: 0.85rem; }
 
-    /* カード余白縮小 */
-    .card         { padding: 14px 16px; }
-    .qa-card      { padding: 12px 14px; }
-    .callout      { padding: 10px 14px; }
-    .key-msg      { padding: 12px 16px; }
+    /* グリッド */
+    .card-grid-3  { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .card-grid-2  { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .metric-cards { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .two-col      { gap: 12px; }
+
+    /* カード余白 */
+    .card, .metric-card, .principle-card,
+    .qa-card, .risk-card { padding: 10px 12px; }
+    .callout, .key-msg   { padding: 8px 12px; margin-top: 8px; }
+
+    /* 大円フロー → 小型化 */
+    .circle-icon  { width: 48px; height: 48px; font-size: 1.1rem; }
+    .circle-title { font-size: 0.68rem; }
+    .circle-desc  { display: none; }
+    .circle-arrow { padding-top: 18px; font-size: 0.9rem; }
+
+    /* 縦型2列プロセス */
+    .proc-icon  { width: 40px; height: 40px; font-size: 1rem; border-radius: 8px; }
+    .proc-title { font-size: 0.78rem; }
+    .proc-desc  { font-size: 0.68rem; }
+    .proc-step  { padding: 6px 0; gap: 10px; }
+    .proc-col   { padding: 0 12px; }
+
+    /* 棒グラフ */
+    .bar-track  { height: 22px; }
+    .bar-label  { width: 72px; font-size: 0.68rem; }
+
+    /* テーブル */
+    thead th, tbody td { padding: 6px 8px; font-size: 0.68rem; }
+
+    /* 表紙 */
+    .cover-title    { font-size: clamp(1.2rem, 4vh, 1.8rem); margin-bottom: 12px; }
+    .cover-subtitle { font-size: 0.85rem; margin-bottom: 16px; }
   }
 </style>
 </head>
 <body>
+
+<!-- 縦向きスマホ向け回転ヒント -->
+<div id="rotate-hint">
+  <i class="fa-solid fa-mobile-screen-button"></i>
+  <p>横向きにしてご覧ください</p>
+</div>
 
 <div id="topbar"><div id="progress-bar"></div></div>
 
