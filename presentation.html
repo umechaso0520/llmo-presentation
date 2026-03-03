@@ -735,35 +735,26 @@
     .proc-col     { padding: 0 16px; }
   }
 
-  /* 横回転ヒント（デフォルト非表示） */
-  #rotate-hint {
-    display: none;
-    position: fixed; inset: 0; z-index: 9999;
-    background: var(--bg-primary);
-    flex-direction: column; align-items: center; justify-content: center; gap: 20px;
-  }
-  #rotate-hint .rotate-icon-wrap { animation: rotate-icon 2s ease-in-out infinite; }
-  #rotate-hint i { font-size: 3rem; color: var(--accent-cyan); }
-  #rotate-hint p { font-size: 1rem; font-weight: 700; color: var(--text-primary); }
-  #rotate-btn {
-    margin-top: 8px;
-    padding: 12px 28px; border: none; border-radius: 50px; cursor: pointer;
-    background: var(--accent-cyan); color: #fff;
-    font-family: 'Noto Sans JP', sans-serif; font-size: 0.95rem; font-weight: 700;
-    display: flex; align-items: center; gap: 8px;
-    box-shadow: 0 4px 14px rgba(51,190,197,0.35);
-  }
-  #rotate-btn:active { opacity: 0.8; }
-  #rotate-hint-ios {
-    font-size: 0.78rem; color: var(--text-muted);
-    text-align: center; line-height: 1.7; display: none;
-  }
-  @keyframes rotate-icon { 0%,100% { transform: rotate(0deg); } 50% { transform: rotate(90deg); } }
-
-  /* スマホ縦向き → 横回転を促す */
+  /* スマホ縦向き → bodyごと90°回転してランドスケープ表示 */
   @media (max-width: 640px) and (orientation: portrait) {
-    #rotate-hint { display: flex; }
-    #presentation, #nav, #topbar { display: none; }
+    #rotate-hint { display: none; }
+
+    html { overflow: hidden; }
+    body {
+      position: fixed;
+      /* 縦画面の中心を基点に回転: 幅↔高さを入れ替えてから rotate */
+      top:  calc(50vh - 50vw);
+      left: calc(50vw - 50vh);
+      width:  100vh;  /* 縦画面の高さ = 横画面の幅 */
+      height: 100vw;  /* 縦画面の幅  = 横画面の高さ */
+      transform: rotate(90deg);
+      transform-origin: center center;
+      overflow: hidden;
+    }
+
+    /* vh は viewport 基準のままなので % で上書き */
+    .slide { height: 100%; }
+    #presentation { height: 100%; }
   }
 
   /* スマホ横向き専用レイアウト */
@@ -827,15 +818,6 @@
 </head>
 <body>
 
-<!-- 縦向きスマホ向け回転ヒント -->
-<div id="rotate-hint">
-  <div class="rotate-icon-wrap"><i class="fa-solid fa-mobile-screen-button"></i></div>
-  <p>横向きにしてご覧ください</p>
-  <button id="rotate-btn" onclick="requestLandscape()">
-    <i class="fa-solid fa-rotate"></i> 横向きにする
-  </button>
-  <p id="rotate-hint-ios">※ iOSの場合はデバイスを手動で横向きにしてください</p>
-</div>
 
 <div id="topbar"><div id="progress-bar"></div></div>
 
@@ -1716,29 +1698,7 @@
 </nav>
 
 <script>
-  /* ---- 横向きリクエスト ---- */
-  async function requestLandscape() {
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-    if (isIOS) {
-      // iOS はAPIが非対応なのでメッセージ表示
-      document.getElementById('rotate-hint-ios').style.display = 'block';
-      return;
-    }
-    try {
-      // フルスクリーン → 横向きロック
-      await document.documentElement.requestFullscreen({ navigationUI: 'hide' });
-      if (screen.orientation && screen.orientation.lock) {
-        await screen.orientation.lock('landscape');
-      }
-    } catch(e) {
-      // APIが使えない端末向けフォールバック
-      document.getElementById('rotate-hint-ios').style.display = 'block';
-      document.getElementById('rotate-hint-ios').textContent =
-        '自動回転できませんでした。デバイスを手動で横向きにしてください。';
-    }
-  }
-
-  const TOTAL = 20;
+const TOTAL = 20;
   let current = 1;
 
   function updateNav() {
