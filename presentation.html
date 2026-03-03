@@ -820,10 +820,16 @@
     }
   }
 
-  /* スマホ横向き専用レイアウト */
-  @media (max-height: 500px) and (orientation: landscape) {
+  /*
+   * コンパクトレイアウト:
+   *   - 実際の横向きスマホ (max-height:500px landscape)
+   *   - CSS回転中の縦向きスマホ (max-width:640px portrait)
+   *     ※ ブラウザは portrait のままなので orientation:landscape は発火しない
+   */
+  @media (max-height: 500px) and (orientation: landscape),
+         (max-width: 640px)   and (orientation: portrait) {
     .slide {
-      padding: 8px 20px 52px;
+      padding: 8px 20px 24px; /* nav は非表示なので 52px → 24px */
       overflow: hidden;
     }
     .slide-inner {
@@ -835,12 +841,8 @@
     /* タイトル・ラベル */
     .section-label  { font-size: 0.6rem; margin-bottom: 4px; }
     .divider        { height: 2px; margin-bottom: 8px; }
-    .slide-title.large  { font-size: clamp(1rem, 3.5vh, 1.4rem); margin-bottom: 8px; }
-    .slide-title.medium { font-size: clamp(0.9rem, 3vh,  1.2rem); margin-bottom: 8px; }
-
-    /* ナビ */
-    #nav      { height: 44px; gap: 12px; }
-    .nav-btn  { width: 32px; height: 32px; font-size: 0.85rem; }
+    .slide-title.large  { font-size: clamp(0.95rem, 3vh, 1.35rem); margin-bottom: 6px; }
+    .slide-title.medium { font-size: clamp(0.85rem, 2.6vh, 1.15rem); margin-bottom: 6px; }
 
     /* グリッド */
     .card-grid-3  { grid-template-columns: repeat(3, 1fr); gap: 8px; }
@@ -850,32 +852,41 @@
 
     /* カード余白 */
     .card, .metric-card, .principle-card,
-    .qa-card, .risk-card { padding: 10px 12px; }
-    .callout, .key-msg   { padding: 8px 12px; margin-top: 8px; }
+    .qa-card, .risk-card { padding: 8px 10px; }
+    .callout, .key-msg   { padding: 6px 10px; margin-top: 6px; }
+    .card-icon           { font-size: 1.3rem; margin-bottom: 4px; }
+    .card h4, .principle-title { font-size: 0.78rem; margin-bottom: 2px; }
+    .card p, .principle-desc   { font-size: 0.68rem; line-height: 1.45; }
 
     /* 大円フロー → 小型化 */
-    .circle-icon  { width: 48px; height: 48px; font-size: 1.1rem; }
-    .circle-title { font-size: 0.68rem; }
+    .circle-icon  { width: 46px; height: 46px; font-size: 1rem; }
+    .circle-title { font-size: 0.65rem; }
     .circle-desc  { display: none; }
-    .circle-arrow { padding-top: 18px; font-size: 0.9rem; }
+    .circle-arrow { padding-top: 16px; font-size: 0.85rem; }
 
     /* 縦型2列プロセス */
-    .proc-icon  { width: 40px; height: 40px; font-size: 1rem; border-radius: 8px; }
-    .proc-title { font-size: 0.78rem; }
-    .proc-desc  { font-size: 0.68rem; }
-    .proc-step  { padding: 6px 0; gap: 10px; }
-    .proc-col   { padding: 0 12px; }
+    .proc-icon  { width: 38px; height: 38px; font-size: 0.95rem; border-radius: 8px; }
+    .proc-title { font-size: 0.75rem; }
+    .proc-desc  { font-size: 0.65rem; }
+    .proc-step  { padding: 5px 0; gap: 8px; }
+    .proc-col   { padding: 0 10px; }
 
     /* 棒グラフ */
-    .bar-track  { height: 22px; }
-    .bar-label  { width: 72px; font-size: 0.68rem; }
+    .bar-track  { height: 20px; }
+    .bar-label  { width: 68px; font-size: 0.65rem; }
+    .bar-val    { font-size: 0.7rem; }
 
     /* テーブル */
-    thead th, tbody td { padding: 6px 8px; font-size: 0.68rem; }
+    thead th, tbody td { padding: 5px 7px; font-size: 0.65rem; }
+
+    /* リスト */
+    .fa-list li { gap: 6px; font-size: 0.75rem; }
+    .fa-list    { gap: 6px; }
 
     /* 表紙 */
-    .cover-title    { font-size: clamp(1.2rem, 4vh, 1.8rem); margin-bottom: 12px; }
-    .cover-subtitle { font-size: 0.85rem; margin-bottom: 16px; }
+    .cover-title    { font-size: clamp(1.1rem, 3.5vh, 1.6rem); margin-bottom: 10px; }
+    .cover-subtitle { font-size: 0.8rem; margin-bottom: 12px; }
+    .cover-eyebrow  { font-size: 0.7rem; margin-bottom: 6px; }
   }
 </style>
 </head>
