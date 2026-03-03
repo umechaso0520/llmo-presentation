@@ -1630,13 +1630,30 @@
     if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   changeSlide(-1);
   });
 
-  let touchStartX = 0;
+  // ホイールスクロールでスライド切り替え（ロックで連続発火防止）
+  let wheelLock = false;
+  document.addEventListener('wheel', function(e) {
+    e.preventDefault();
+    if (wheelLock) return;
+    wheelLock = true;
+    changeSlide(e.deltaY > 0 ? 1 : -1);
+    setTimeout(() => { wheelLock = false; }, 750);
+  }, { passive: false });
+
+  // タッチスワイプ（縦・横両対応）
+  let touchStartX = 0, touchStartY = 0;
   document.addEventListener('touchstart', function(e) {
     touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
   }, { passive: true });
   document.addEventListener('touchend', function(e) {
     const dx = e.changedTouches[0].clientX - touchStartX;
-    if (Math.abs(dx) > 50) changeSlide(dx < 0 ? 1 : -1);
+    const dy = e.changedTouches[0].clientY - touchStartY;
+    if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 50) {
+      changeSlide(dy < 0 ? 1 : -1);   // 縦スワイプ優先
+    } else if (Math.abs(dx) > 50) {
+      changeSlide(dx < 0 ? 1 : -1);   // 横スワイプ
+    }
   }, { passive: true });
 
   updateNav();
