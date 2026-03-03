@@ -1,0 +1,12 @@
+node_modules/
+*.pptx
+slide_images/
+slide_data.json
+slide_preview.html
+slide_review.html
+create-slides.js
+package.json
+package-lock.json
+llmo-research.md
+slide-outline.md
+html-presentation.skill
