@@ -34,11 +34,14 @@
     overflow: hidden;
   }
 
-  #presentation { width: 100%; height: 100vh; position: relative; }
+  /* app wrapper: 全要素を包むコンテナ（回転ターゲット） */
+  #app { position: fixed; inset: 0; overflow: hidden; }
+
+  #presentation { width: 100%; height: 100%; position: relative; }
 
   .slide {
-    position: fixed; top: 0; left: 0;
-    width: 100%; height: 100vh;
+    position: absolute; top: 0; left: 0;
+    width: 100%; height: 100%;
     display: flex; flex-direction: column;
     justify-content: center; align-items: center;
     padding: 60px 80px 100px;
@@ -213,7 +216,7 @@
 
   /* ===== NAVIGATION ===== */
   #nav {
-    position: fixed; bottom: 0; left: 0; width: 100%; height: 68px;
+    position: absolute; bottom: 0; left: 0; width: 100%; height: 68px;
     display: flex; align-items: center; justify-content: center; gap: 24px;
     z-index: 1000; background: rgba(255,255,255,0.92);
     border-top: 1px solid rgba(51,190,197,0.1); padding: 0 40px;
@@ -234,7 +237,7 @@
   }
 
   /* ===== TOP BAR ===== */
-  #topbar { position: fixed; top: 0; left: 0; width: 100%; height: 4px; background: rgba(51,190,197,0.1); z-index: 999; }
+  #topbar { position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: rgba(51,190,197,0.1); z-index: 999; }
   #progress-bar { height: 100%; background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan)); transition: width 0.35s ease; border-radius: 0 2px 2px 0; }
 
   /* ===== SLIDE 1: COVER ===== */
@@ -735,13 +738,9 @@
     .proc-col     { padding: 0 16px; }
   }
 
-  /* スマホ縦向き → bodyごと90°回転してランドスケープ表示 */
+  /* スマホ縦向き → #appごと90°回転してランドスケープ表示（iOS Safari対応） */
   @media (max-width: 640px) and (orientation: portrait) {
-    #rotate-hint { display: none; }
-
-    html { overflow: hidden; }
-    body {
-      position: fixed;
+    #app {
       /* 縦画面の中心を基点に回転: 幅↔高さを入れ替えてから rotate */
       top:  calc(50vh - 50vw);
       left: calc(50vw - 50vh);
@@ -749,12 +748,7 @@
       height: 100vw;  /* 縦画面の幅  = 横画面の高さ */
       transform: rotate(90deg);
       transform-origin: center center;
-      overflow: hidden;
     }
-
-    /* vh は viewport 基準のままなので % で上書き */
-    .slide { height: 100%; }
-    #presentation { height: 100%; }
   }
 
   /* スマホ横向き専用レイアウト */
@@ -818,6 +812,7 @@
 </head>
 <body>
 
+<div id="app">
 
 <div id="topbar"><div id="progress-bar"></div></div>
 
@@ -1696,6 +1691,8 @@
   <span id="slide-counter">1 / 20</span>
   <button class="nav-btn" id="btn-next" onclick="changeSlide(1);this.blur()" title="次へ"><i class="fa-solid fa-chevron-right"></i></button>
 </nav>
+
+</div><!-- /app -->
 
 <script>
 const TOTAL = 20;
