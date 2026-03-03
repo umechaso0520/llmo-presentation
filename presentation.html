@@ -33,6 +33,10 @@
     font-family: 'Noto Sans JP', sans-serif;
     overflow: hidden;
   }
+  /* iOS Safari: body を 1px スクロール可能にしてアドレスバーを縮める */
+  @supports (-webkit-touch-callout: none) {
+    body { overflow-y: scroll; height: auto; }
+  }
 
   /* app wrapper: 全要素を包むコンテナ（回転ターゲット） */
   #app { position: fixed; inset: 0; overflow: hidden; }
@@ -738,14 +742,79 @@
     .proc-col     { padding: 0 16px; }
   }
 
+  /* ===== SWIPE HINT OVERLAY ===== */
+  #swipe-hint {
+    display: none; /* JS で .sh-show を付与 */
+    position: absolute; inset: 0; z-index: 1200;
+    background: rgba(10, 42, 44, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    flex-direction: column; align-items: center; justify-content: center; gap: 22px;
+    opacity: 0; transition: opacity 0.5s ease;
+    pointer-events: none;
+  }
+  #swipe-hint.sh-show { opacity: 1; pointer-events: all; }
+
+  .sh-stage {
+    display: flex; align-items: center; gap: 0;
+  }
+  .sh-track {
+    position: relative; width: 160px; height: 72px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .sh-trail {
+    position: absolute; width: 100%; height: 3px; border-radius: 99px;
+    background: linear-gradient(90deg, transparent, rgba(51,190,197,0.55), transparent);
+    animation: sh-trail 2s ease-in-out infinite;
+  }
+  .sh-hand {
+    position: relative; z-index: 1; font-size: 2.1rem; color: #fff;
+    filter: drop-shadow(0 0 14px rgba(51,190,197,0.9));
+    animation: sh-hand 2s ease-in-out infinite;
+  }
+  .sh-arr {
+    display: flex; gap: 2px; font-size: 1rem; align-items: center;
+    padding: 0 10px;
+  }
+  .sh-arr-l { color: rgba(255,255,255,0.55); animation: sh-arr-l 2s ease-in-out infinite; }
+  .sh-arr-r { color: rgba(255,255,255,0.55); animation: sh-arr-r 2s ease-in-out infinite; }
+  .sh-label { color: rgba(255,255,255,0.95); font-size: 0.9rem; font-weight: 700; letter-spacing: 0.12em; }
+  .sh-sub   { color: rgba(255,255,255,0.38); font-size: 0.7rem; letter-spacing: 0.06em; }
+
+  @keyframes sh-hand {
+    0%   { transform: translateX(38px); opacity: 0.3; }
+    15%  { opacity: 1; }
+    50%  { transform: translateX(-38px); opacity: 1; }
+    85%  { opacity: 1; }
+    100% { transform: translateX(38px); opacity: 0.3; }
+  }
+  @keyframes sh-trail {
+    0%, 100% { opacity: 0; transform: scaleX(0.4); }
+    25%, 75%  { opacity: 1; transform: scaleX(1); }
+  }
+  @keyframes sh-arr-l {
+    0%, 55%, 100% { opacity: 0.15; transform: translateX(0); }
+    70%, 85%      { opacity: 0.9;  transform: translateX(-5px); }
+  }
+  @keyframes sh-arr-r {
+    0%, 10%, 100% { opacity: 0.15; transform: translateX(0); }
+    25%, 40%      { opacity: 0.9;  transform: translateX(5px); }
+  }
+
+  /* モバイル共通: ナビボタン非表示、スワイプヒント表示 */
+  @media (max-width: 640px) {
+    #nav { display: none; }
+    #swipe-hint { display: flex; }
+    .slide { padding-bottom: 24px; } /* nav 分の余白を削減 */
+  }
+
   /* スマホ縦向き → #appごと90°回転してランドスケープ表示（iOS Safari対応） */
   @media (max-width: 640px) and (orientation: portrait) {
     #app {
-      /* 縦画面の中心を基点に回転: 幅↔高さを入れ替えてから rotate */
-      top:  calc(50vh - 50vw);
-      left: calc(50vw - 50vh);
-      width:  100vh;  /* 縦画面の高さ = 横画面の幅 */
-      height: 100vw;  /* 縦画面の幅  = 横画面の高さ */
+      /* dvh = Safariのバー縮退に追従する動的 viewport height */
+      top:  calc(50vh - 50vw); top:  calc(50dvh - 50vw);
+      left: calc(50vw - 50vh); left: calc(50vw - 50dvh);
+      width:  100vh;  width:  100dvh;
+      height: 100vw;
       transform: rotate(90deg);
       transform-origin: center center;
     }
@@ -1692,6 +1761,24 @@
   <button class="nav-btn" id="btn-next" onclick="changeSlide(1);this.blur()" title="次へ"><i class="fa-solid fa-chevron-right"></i></button>
 </nav>
 
+<!-- ===== SWIPE HINT ===== -->
+<div id="swipe-hint">
+  <div class="sh-stage">
+    <div class="sh-arr sh-arr-l">
+      <i class="fa-solid fa-chevron-left"></i><i class="fa-solid fa-chevron-left"></i>
+    </div>
+    <div class="sh-track">
+      <div class="sh-trail"></div>
+      <i class="fa-solid fa-hand-pointer sh-hand"></i>
+    </div>
+    <div class="sh-arr sh-arr-r">
+      <i class="fa-solid fa-chevron-right"></i><i class="fa-solid fa-chevron-right"></i>
+    </div>
+  </div>
+  <p class="sh-label">スワイプで操作</p>
+  <p class="sh-sub">タップで閉じる</p>
+</div>
+
 </div><!-- /app -->
 
 <script>
@@ -1749,6 +1836,34 @@ const TOTAL = 20;
   }, { passive: true });
 
   updateNav();
+
+  /* ===== スワイプヒント（モバイルのみ・初回表示） ===== */
+  (function() {
+    const hint = document.getElementById('swipe-hint');
+    if (!hint) return;
+    if (!window.matchMedia('(max-width: 640px)').matches) return;
+
+    // フェードイン
+    requestAnimationFrame(() => hint.classList.add('sh-show'));
+
+    const dismiss = () => {
+      hint.classList.remove('sh-show');
+      setTimeout(() => { hint.style.display = 'none'; }, 500);
+    };
+
+    // 3秒で自動消去
+    const timer = setTimeout(dismiss, 3000);
+
+    // タップ/スワイプで即消去
+    hint.addEventListener('touchstart', () => { clearTimeout(timer); dismiss(); },
+      { once: true, passive: true });
+  })();
+
+  /* ===== iOS Safari: アドレスバーを縮める ===== */
+  if (/iP(hone|ad)/.test(navigator.userAgent)) {
+    // body を一時的にスクロール可能にして 1px スクロール → バーが縮む
+    setTimeout(() => { window.scrollTo(0, 1); }, 300);
+  }
 </script>
 </body>
 </html>
