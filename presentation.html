@@ -887,6 +887,50 @@
     .cover-title    { font-size: clamp(1.1rem, 3.5vh, 1.6rem); margin-bottom: 10px; }
     .cover-subtitle { font-size: 0.8rem; margin-bottom: 12px; }
     .cover-eyebrow  { font-size: 0.7rem; margin-bottom: 6px; }
+
+    /* ===== overflow 修正 ===== */
+
+    /* 全スライド: inline style margin-bottom を上書き */
+    .slide-title { margin-bottom: 6px !important; }
+    .key-msg     { margin-top: 4px !important; }
+    .callout     { margin-top: 4px !important; }
+
+    /* S2: proc-grid マージン削減 */
+    .proc-grid { margin-top: 4px !important; margin-bottom: 4px !important; }
+
+    /* S4: 検索クエリリストのギャップ・マージン・パディング削減 */
+    .search-bar-list { gap: 6px !important; margin-bottom: 6px !important; }
+    .search-bar      { padding: 7px 12px !important; font-size: 0.72rem !important; gap: 8px !important; }
+
+    /* S8: risk-cards を3列に戻す・余白削減 */
+    .risk-cards   { grid-template-columns: repeat(3, 1fr) !important; gap: 8px !important; }
+    .risk-big     { font-size: 1.1rem !important; }
+    .risk-center  { margin: 3px 0 6px !important; }
+    .risk-warning { margin-top: 6px !important; font-size: 0.72rem; }
+
+    /* S10: principle-cards を3列に戻す・アイコン・数字を小型化 */
+    .principle-cards { grid-template-columns: repeat(3, 1fr) !important; gap: 8px !important; }
+    .principle-card  { gap: 4px !important; }
+    .principle-num   { font-size: 1rem !important; line-height: 1 !important; opacity: 0.2; }
+    .principle-body  { font-size: 0.65rem; }
+    /* inline style の icon-badge も上書き */
+    #slide-10 .icon-badge {
+      width: 36px !important; height: 36px !important;
+      font-size: 1rem !important; border-radius: 10px !important;
+      margin: 0 auto 4px !important;
+    }
+
+    /* S19: CTA スライドの各要素を縮小 */
+    .cta19-num       { font-size: clamp(1.8rem, 4vw, 2.8rem) !important; }
+    .cta19-title     { font-size: clamp(0.9rem, 1.8vw, 1.2rem) !important; margin: 4px 0 8px !important; }
+    .cta19-checklist { gap: 5px !important; margin-bottom: 10px !important; }
+    .cta19-checklist li { font-size: 0.68rem !important; gap: 6px !important; }
+    .cta19-btn       { padding: 10px 20px !important; font-size: 0.85rem !important; margin-bottom: 8px !important; }
+    .cta19-eyebrow   { margin-bottom: 4px !important; }
+
+    /* S20: 付録テーブル */
+    .two-col { gap: 8px !important; }
+    thead th, tbody td { padding: 4px 6px; font-size: 0.6rem; }
   }
 </style>
 </head>
