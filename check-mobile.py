@@ -36,7 +36,7 @@ VIEWPORTS = [
 ]
 TOTAL_SLIDES = 20
 DESIGN_WIDTH = 393   # JS の --ms = innerWidth / DESIGN_WIDTH
-SLIDE_PAD_TOP = 8    # .slide の padding-top (compact media query)
+SLIDE_PAD_TOP = 14   # .slide の padding-top (compact media query)
 TOLERANCE = 9        # 許容誤差 (px)
 # --------------------------
 

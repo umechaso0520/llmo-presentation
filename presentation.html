@@ -835,7 +835,7 @@
   @media (max-height: 500px) and (orientation: landscape),
          (max-width: 640px)   and (orientation: portrait) {
     .slide {
-      padding: 8px 20px 24px; /* nav は非表示なので 52px → 24px */
+      padding: 14px 20px 24px; /* nav は非表示なので 52px → 24px */
       overflow: hidden;
     }
     .slide-inner {
@@ -937,6 +937,18 @@
     /* S20: 付録テーブル */
     .two-col { gap: 8px !important; }
     thead th, tbody td { padding: 4px 6px; font-size: 0.6rem; }
+
+    /* S16: FAQ - モバイルでは文字を縮小してバランス調整 */
+    #slide-16 .slide-title        { font-size: 0.9rem !important; margin-bottom: 6px !important; }
+    #slide-16 .qa-q               { font-size: 0.68rem !important; line-height: 1.4 !important; }
+    #slide-16 .qa-a               { font-size: 0.62rem !important; line-height: 1.4 !important; }
+    #slide-16 .qa-card            { gap: 3px !important; padding: 7px 10px !important; }
+    #slide-16 .slide-inner > div  { gap: 8px !important; }
+
+    /* S20: 付録2列テーブルのラベル高さを揃えて table 上端をそろえる */
+    #slide-20 .two-col > div > p:first-child {
+      min-height: 2.8em; display: flex; align-items: flex-start; flex-direction: column;
+    }
   }
 </style>
 </head>
@@ -1909,7 +1921,7 @@ const TOTAL = 20;
     document.documentElement.style.setProperty('--ms', '1');
 
     // .slide は常に display:flex（opacity で表示切替）なので全スライド直接計測できる
-    var SLIDE_PAD_TOP = 8; // compact CSS の .slide padding-top
+    var SLIDE_PAD_TOP = 14; // compact CSS の .slide padding-top
     var maxH = 0;
     document.querySelectorAll('.slide .slide-inner').forEach(function(inner) {
       maxH = Math.max(maxH, inner.scrollHeight);
